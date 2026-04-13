@@ -45,7 +45,7 @@ cli -playermgr xxxx -task xxxx      # 查看任务
 cli -next    # 执行一次 update 或处理一次 message
 ```
 
-对应程序就执行一次 update 或者处理一次 message。
+对应程序就执行一次 update，或从 message_queue 中取出一条消息完成分发处理。
 
 ### 3. 看日志
 
