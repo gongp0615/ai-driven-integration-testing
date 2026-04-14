@@ -1,0 +1,39 @@
+2026/04/14 14:42:51 game server started on :5401
+2026/04/14 14:42:51 client connected: 127.0.0.1:35912
+2026/04/14 14:42:51 running AI test scenario: autonomous-discovery (mode: dual)
+2026/04/14 14:43:11 [Code Channel] list dir: . (11 entries)
+2026/04/14 14:43:37 [Code Channel] search 'internal/': 27 matches
+2026/04/14 14:44:06 [Code Channel] search 'Publish': 19 matches
+2026/04/14 14:44:06 [Code Channel] search 'Subscribe': 16 matches
+2026/04/14 14:44:25 [Code Channel] search 'internal/bag/bag.go': 2 matches
+2026/04/14 14:44:25 [Code Channel] search 'internal/event/bus.go': 0 matches
+2026/04/14 14:44:48 [Code Channel] search 'item.added': 5 matches
+2026/04/14 14:44:48 [Code Channel] search 'task.completed': 2 matches
+2026/04/14 14:44:48 [Code Channel] search 'achievement.unlocked': 2 matches
+2026/04/14 14:44:48 [Code Channel] search 'signin.claimed': 2 matches
+2026/04/14 14:44:48 [Code Channel] search 'equip.success': 2 matches
+2026/04/14 14:45:03 [Code Channel] search 'item.removed': 1 matches
+2026/04/14 14:45:03 [Code Channel] search 'equip.removed': 0 matches
+2026/04/14 14:45:03 [Code Channel] search 'signin.checked': 0 matches
+2026/04/14 14:45:03 [Code Channel] search 'mail.claimed': 1 matches
+2026/04/14 14:45:20 [Code Channel] search 'func (b *Bag) AddItem': 1 matches
+2026/04/14 14:45:20 [Code Channel] search 'func (ts *TaskService)': 0 matches
+2026/04/14 14:45:20 [Code Channel] search 'func (as *AchievementService)': 0 matches
+2026/04/14 14:45:20 [Code Channel] search 'func (ss *SignInService)': 0 matches
+2026/04/14 14:45:20 [Code Channel] search 'func (es *EquipmentService)': 0 matches
+2026/04/14 14:45:20 [Code Channel] search 'func (ms *MailService)': 0 matches
+2026/04/14 14:45:30 [Code Channel] search 'func (ts *': 5 matches
+2026/04/14 14:45:30 [Code Channel] search 'func (as *': 7 matches
+2026/04/14 14:45:30 [Code Channel] search 'func (ss *': 4 matches
+2026/04/14 14:45:30 [Code Channel] search 'func (es *': 7 matches
+2026/04/14 14:45:30 [Code Channel] search 'func (ms *': 6 matches
+2026/04/14 14:45:42 [Code Channel] search 'onItemAdded': 6 matches
+2026/04/14 14:45:42 [Code Channel] search 'onTaskCompleted': 2 matches
+2026/04/14 14:45:42 [Code Channel] search 'onEquipSuccess': 2 matches
+2026/04/14 14:45:42 [Code Channel] search 'onAchievementUnlocked': 2 matches
+2026/04/14 14:45:42 [Code Channel] search 'onSignInClaimed': 2 matches
+2026/04/14 14:45:58 [Code Channel] search 'Progress': 8 matches
+2026/04/14 14:45:58 [Code Channel] search 'target': 4 matches
+2026/04/14 14:45:58 [Code Channel] search 'delta': 3 matches
+2026/04/14 14:46:33 [Code Channel] search 'onItemAdded(e event.Event)': 3 matches
+2026/04/14 14:46:33 [Code Channel] search 'itemID': 31 matches
