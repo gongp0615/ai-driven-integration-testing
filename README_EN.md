@@ -4,7 +4,7 @@
 
 ## Abstract
 
-Large Language Models (LLMs) have dramatically improved code generation efficiency, yet system-level verification still relies heavily on manually written test cases. As development velocity increases and inter-module dependencies grow more complex, traditional approaches face structural bottlenecks. This paper proposes DSMB-Agent, an agent-driven integration testing method for complex systems that shifts the majority of system-level verification work from developers to agents through a three-phase process (Understand-Design-Execute). The method is built on two core mechanisms: (1) a Tree-Structured Command Space — exposing the system under test as a hierarchical structure of "module -> command -> parameter schema," where the agent can both use existing commands and autonomously register new commands within controlled boundaries to extend testing capabilities; and (2) Step-Wise Reasoning — using a breakpoint controller to separate command enqueuing from execution, allowing the agent to observe causal chains after each step and dynamically adjust its testing direction. On an event-driven game server prototype with 6 business modules and 7 seeded defects, we designed three autonomy levels (L0/L1/L2) and a 2x2 ablation study, conducting 3 repeated runs on each of two LLMs (GLM-5.1, GPT-5.4) for a total of 42 runs. Results show that: on GLM-5.1, the step-wise execution group found an average of 3.7/7 defects (F1=0.74) versus only 1.3/7 for the batch execution group (F1=0.32); on GPT-5.4, the code+batch group performed best (5.0/7); in L0 mode, both models successfully registered complete test command sets from scratch and found 4-5 defects; L1 mode on GPT-5.4 achieved a single-run maximum of 6/7 defects, validating the cross-model feasibility of the approach.
+Large Language Models (LLMs) have dramatically improved code generation efficiency, yet system-level verification still relies heavily on manually written test cases. As development velocity increases and inter-module dependencies grow more complex, traditional approaches face structural bottlenecks. This paper proposes DSMB-Agent, an agent-driven integration testing method for complex systems that shifts the majority of system-level verification work from developers to agents through a three-phase process (Understand-Design-Execute). The method is built on two core mechanisms: (1) a Tree-Structured Command Space — exposing the system under test as a hierarchical structure of "module -> command -> parameter schema," where the agent can both use existing commands and autonomously register new commands within controlled boundaries to extend testing capabilities; and (2) Step-Wise Reasoning — using a breakpoint controller to separate command enqueuing from execution, allowing the agent to observe causal chains after each step and dynamically adjust its testing direction. On an event-driven game server prototype with 6 business modules and 7 seeded defects, we designed three autonomy levels (L0/L1/L2) and a 2x2 ablation study, conducting 3 repeated runs on each of two LLMs (GLM-5.1, GPT-5.4) for a total of 42 runs. Results show that: on GLM-5.1, the step-wise execution group found an average of 3.7/7 defects versus only 1.3/7 for the batch execution group; on GPT-5.4, the code+batch group performed best (5.0/7); in L0 mode, both models successfully registered complete test command sets from scratch and found 4-5 defects; L1 mode on GPT-5.4 achieved a single-run maximum of 6/7 defects, validating the cross-model feasibility of the approach.
 
 **Keywords**: Integration Testing; LLM Agent; Command Tree; Step-Wise Reasoning; Autonomy Levels; Ablation Study
 
@@ -119,6 +119,8 @@ The corresponding JSON request format:
 ```
 
 The agent can query the complete command tree structure via `{"cmd": "system", "action": "help"}`, achieving runtime **discoverability**.
+
+> **Implementation note:** The command tree above is a logical model. The experimental prototype uses a flattened command namespace for simplicity (e.g., `additem` instead of `bag.AddItem`), and players are created automatically at startup without an explicit `player.login` command. The mapping between the logical hierarchy and the flat implementation does not affect the generality of the method.
 
 #### 3.1.2 Extension to Microservice Architectures
 
@@ -401,7 +403,7 @@ The experimental prototype is an event-driven game server implemented in Go, con
 |--------|---------------|------------|
 | Bag | Item add/remove management | Publishes `item.added`, `item.removed` |
 | Task | Task progress tracking | Subscribes to `item.added`, publishes `task.completed` |
-| Achievement | Achievement unlocking | Subscribes to `task.completed`, `item.added`, `equip.success` |
+| Achievement | Achievement unlocking | Subscribes to `task.completed`, `item.added`, `equip.success`; publishes `achievement.unlocked` |
 | Equipment | Equipment equipping | Subscribes to `item.added`, publishes `equip.success` |
 | SignIn | Daily sign-in rewards | Publishes `signin.claimed` |
 | Mail | Mail and attachments | Subscribes to `achievement.unlocked`, `signin.claimed`, publishes `mail.claimed` |
@@ -461,10 +463,6 @@ Experiments were conducted on two LLMs to evaluate the method's dependence on th
 |--------|-----------|
 | Bug Recall | Number of true defects found / 7 |
 | Bug Precision | Number of true defects / total reported defects |
-| F1 Score | Harmonic mean of precision and recall |
-| Level Score | L1 weight 1.0, L2 weight 1.5, L3 weight 2.0, L4 weight 3.0, max 14.0 |
-| Correlation Recall | Correctly identified cross-module correlations / 10 |
-| False Positive Rate | False positive defects / total reported defects |
 
 ---
 
@@ -493,14 +491,6 @@ Table 1 reports the defect detection matrix for the four L2 experimental groups 
 | Avg. defects found | 1.3 | 3.7 | 3.7 | 2.7 | 4.0 |
 | Avg. iterations | 55 | 87 | 72 | 93 | 25 |
 | B1 detection rate | 0% | 0% | 67% | 0% | 33% |
-
-**Ablation Factor Analysis (Based on 3-Run Means):**
-
-| Factor | Bug Recall Gain |
-|--------|:--------------:|
-| Step-wise execution main effect (B-A vs D-C) | +0.24 |
-| Code understanding main effect (C-A vs D-B) | +0.18 |
-| Interaction effect | -0.24 |
 
 ### 5.2 L2 Ablation Study (GPT-5.4, 3 Runs)
 
@@ -536,7 +526,7 @@ To verify whether the findings on GLM-5.1 hold across models, the L2 ablation st
 
 **Finding 4: code-only has the highest cross-model stability.** code-only achieved approximately 4/7 defect detection rate on both models and had the highest probability of detecting B1 among L2 groups (1/3 on GLM-5.1, combined with code-batch's 2/3). However, its inherent limitation is the inability to rule out false positives through runtime verification.
 
-**Finding 5: B4 and B6 are the most easily detected defects across both models.** On GLM-5.1, B4 (sign-in reward with no idempotency guard) was found in all 15 L2 runs, and B6 (mail attachment chain break) was found in 12/15 runs. The behavioral anomalies of these two defects are highly visible in logs and can be identified without deep reasoning.
+**Finding 5: The most easily detected defects differ between models.** On GLM-5.1, B4 (sign-in reward with no idempotency guard) was found in all 15 L2 runs, and B6 (mail attachment chain break) was found in 12/15 runs. On GPT-5.4, B3 (achievement counting wrong objects) was the most stable (14/15 detections), while B4 and B6 were primarily found in groups with code access (8/15 each). The common trait is that these defects exhibit behavioral anomalies highly visible in logs or code, identifiable without deep reasoning.
 
 ### 5.3 Cross-Model Comparison
 
@@ -552,7 +542,7 @@ Combining results from both models (all 3-run means):
 | D (dual) | 2.7 | 4.0 | GPT superior |
 | code-only | 4.0 | 4.0 | Consistent |
 
-**Core insight:** Step-wise execution and code understanding each have independent contributions, but the relative magnitude of their effects depends on model capability. On GLM-5.1, the marginal benefit of step-wise execution (+0.24 recall) exceeds that of code understanding (+0.18), while on GPT-5.4, code understanding significantly boosts batch mode performance (Group C 5.0 vs Group A 1.7). Negative interaction effects were observed on both models, indicating that simultaneously enabling both capabilities faces cognitive load issues under the current agent architecture. This implies that as LLM capabilities improve, optimal strategies need to adjust the weight allocation between code understanding and runtime exploration based on model characteristics.
+**Core insight:** Step-wise execution and code understanding each have independent contributions, but the relative magnitude of their effects depends on model capability. On GLM-5.1, the marginal benefit of step-wise execution is more pronounced (Group B 3.7 vs Group A 1.3), while on GPT-5.4, code understanding significantly boosts batch mode performance (Group C 5.0 vs Group A 1.7). Negative interaction effects were observed on both models (Group D underperforms single-factor groups), indicating that simultaneously enabling both capabilities faces cognitive load issues under the current agent architecture. This implies that as LLM capabilities improve, optimal strategies need to adjust the weight allocation between code understanding and runtime exploration based on model characteristics.
 
 ### 5.4 L0 Experimental Results
 
@@ -598,7 +588,7 @@ The advantage of step-wise execution over batch execution lies not merely in fin
 
 ### 6.3 The Effectiveness of Code Understanding Depends on Model Capability
 
-On GLM-5.1, Group D (2.7/7) performed below both Group B and Group C (both 3.7/7); on GPT-5.4, Group C (code-batch, 5.0/7) significantly outperformed Group B (step-only, 2.0/7). This cross-model comparison reveals an important insight: the marginal benefit of code understanding is not fixed but grows with the model's code comprehension capability. The negative interaction effects observed on both models partly stem from simultaneously enabling code analysis and step-wise execution increasing the agent's cognitive load — switching between code reading and runtime exploration consumed additional iterations. When the model's code understanding capability is stronger (GPT-5.4) or tools are more efficient (LSP semantic navigation replacing text search), the return on investment for the code understanding phase improves significantly.
+On GLM-5.1, Group D (2.7/7) performed below both Group B and Group C (both 3.7/7); on GPT-5.4, Group C (code-batch, 5.0/7) significantly outperformed Group B (step-only, 2.0/7). This cross-model comparison reveals an important insight: the marginal benefit of code understanding is not fixed but grows with the model's code comprehension capability. The negative interaction effects observed on both models (Group D underperforming single-factor groups) partly stem from simultaneously enabling code analysis and step-wise execution increasing the agent's cognitive load — switching between code reading and runtime exploration consumed additional iterations. When the model's code understanding capability is stronger (GPT-5.4) or tools are more efficient (LSP semantic navigation replacing text search), the return on investment for the code understanding phase improves significantly.
 
 The implication for engineering practice is that as LLM code understanding capabilities continue to improve, the "code + runtime" combination will gradually become the optimal strategy, and the relative advantage of "pure runtime" mode will diminish. This paper also integrated LSP (gopls) semantic code analysis tools in the GPT-5.4 experiments, enabling the agent to obtain precise cross-module reference relationships through calls like `lsp_references`, `lsp_definition`, and `lsp_symbols` — a single `lsp_references("Publish")` call returns all 11 event publication points, replacing multiple `search_code` + `read_file` combinations. In larger real-world projects, the advantages of LSP will be further amplified.
 
@@ -645,7 +635,7 @@ The method proposed in this paper points to a new engineering division of labor:
 This paper proposes DSMB-Agent, an agent-driven integration testing method based on a tree-structured command space and step-wise reasoning. Through experimental validation on two LLMs (GLM-5.1, GPT-5.4), the following conclusions are drawn:
 
 1. Both step-wise execution and code understanding have independent contributions — on GLM-5.1, the step and code+batch groups both achieved 3.7/7 (vs. batch group 1.3/7); on GPT-5.4, the code+batch group was optimal (5.0/7);
-2. The effectiveness of code understanding is highly dependent on model capability — on GLM-5.1, the marginal benefit of code understanding (+0.18) was smaller than step-wise execution (+0.24), while on GPT-5.4, code understanding boosted batch mode from 1.7 to 5.0;
+2. The effectiveness of code understanding is highly dependent on model capability — on GLM-5.1, step-wise execution showed a more pronounced marginal benefit (Group B 3.7 vs Group A 1.3), while on GPT-5.4, code understanding boosted batch mode from 1.7 to 5.0;
 3. Negative interaction effects were observed on both models — simultaneously enabling code analysis and step-wise execution actually reduced effectiveness, indicating a cognitive load ceiling under the current agent architecture;
 4. B1 was a shared blind spot across all L2 groups on both models — command registration capability (L0/L1) is key to breaking through interface blind spots;
 5. L0 (full autonomy) mode on both models successfully built complete test command sets from scratch and found 3-5 defects; L1 mode on GPT-5.4 averaged 5.3/7 (maximum 6/7 in a single run), validating cross-model feasibility;

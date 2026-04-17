@@ -1,4 +1,4 @@
-# BST-Agent 实验补完 TODO 备忘录
+# DSMB-Agent 实验补完 TODO 备忘录
 
 > 这份备忘录只记录**后续需要补完的实验工作**。当前论文主文档见 [`README.md`](./README.md)。
 
