@@ -71,6 +71,8 @@ func (a *Agent) Run(ctx context.Context, taskDesc string) (string, error) {
 	forcedAt := maxIter - 3
 
 	for i := 0; i < maxIter; i++ {
+		log.Printf("\n--- iteration %d/%d ---", i+1, maxIter)
+
 		if i == warnAt {
 			messages = append(messages, oai.ChatCompletionMessage{
 				Role:    oai.ChatMessageRoleUser,
@@ -95,7 +97,13 @@ func (a *Agent) Run(ctx context.Context, taskDesc string) (string, error) {
 		choice := resp.Choices[0]
 		messages = append(messages, choice.Message)
 
+		// Log the agent's reasoning/thinking text if present
+		if thinking := strings.TrimSpace(choice.Message.Content); thinking != "" {
+			log.Printf("[Thinking] %s", thinking)
+		}
+
 		if choice.FinishReason == oai.FinishReasonStop {
+			log.Printf("--- agent finished (iteration %d) ---", i+1)
 			return choice.Message.Content, nil
 		}
 
