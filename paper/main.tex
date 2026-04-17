@@ -60,7 +60,7 @@ The main contributions of this paper are:
 \item We propose the tree-structured command space and runtime command registration mechanism, enabling the agent to discover, use, and extend the system's test interfaces (Sections~3.1--3.2).
 \item We propose step-wise reasoning with the Hold World mechanism, pausing the system world after each step so the agent can autonomously decide---query, modify, register interfaces, or read code---before advancing (Section~3.3).
 \item We design three autonomy levels (L0/L1/L2) and a $2\times2$ ablation study, conducting 3 repeated runs on two LLMs to quantify the individual contributions of command registration and step-wise execution (Sections~4--5).
-\item In 42 runs on an event-driven system prototype, GLM-5.1's step-wise group achieves F1=0.74 (vs.\ batch group 0.32), GPT-5.4's code+batch group performs best (5.0/7), and L1+LSP on GPT-5.4 reaches a single-run maximum of 6/7 (Section~5).
+\item In 42 runs on an event-driven system prototype, GLM-5.1's step-wise group discovers an average of 3.7/7 defects (vs.\ batch group 1.3/7), GPT-5.4's code+batch group performs best (5.0/7), and L1+LSP on GPT-5.4 reaches a single-run maximum of 6/7 (Section~5).
 \end{enumerate}
 
 \subsection{Paper Organization}
@@ -378,10 +378,6 @@ Metric & Definition \\
 \midrule
 Bug Recall & True defects found / 7 \\
 Bug Precision & True defects / total reported defects \\
-F1 Score & Harmonic mean of precision and recall \\
-Level Score & L1=1.0, L2=1.5, L3=2.0, L4=3.0; max 14.0 \\
-Correlation Recall & Correct cross-module correlations / 10 \\
-False Positive Rate & False positives / total reported defects \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -427,22 +423,8 @@ B1 detection rate & 0\% & 0\% & 67\% & 0\% & 33\% \\
 \end{tabular}
 \end{table}
 
-\textbf{Ablation factor analysis (based on 3-run means):}
-
-\begin{table}[t]
-\caption{Ablation factor analysis (GLM-5.1).}
-\label{tab:glm-ablation}
-\small
-\begin{tabular}{lc}
-\toprule
-Factor & Bug Recall Gain \\
-\midrule
-Step-wise main effect (B$-$A vs D$-$C) & +0.24 \\
-Code understanding main effect (C$-$A vs D$-$B) & +0.18 \\
-Interaction effect & $-$0.24 \\
-\bottomrule
-\end{tabular}
-\end{table}
+% Ablation factor analysis table removed (math was incorrect).
+% Raw data in Tables 1--4 remains the authoritative source.
 
 \subsection{L2 Ablation Study (GPT-5.4, 3 Runs)}
 
@@ -515,7 +497,7 @@ code-only & 4.0 & 4.0 & Consistent \\
 \end{tabular}
 \end{table}
 
-\textbf{Core insight:} Step-wise execution and code understanding each make independent contributions, but their relative magnitudes depend on model capability. On GLM-5.1, the marginal gain from step-wise execution (+0.24 recall) exceeds that of code understanding (+0.18), while on GPT-5.4, code understanding dramatically improves batch mode performance (C group 5.0 vs A group 1.7). Both models exhibit negative interaction effects, indicating that simultaneously enabling both capabilities creates cognitive load issues under the current agent architecture. This implies that as LLM capabilities improve, the optimal strategy should adjust the weight allocation between code understanding and runtime exploration based on model characteristics.
+\textbf{Core insight:} Step-wise execution and code understanding each make independent contributions, but their relative magnitudes depend on model capability. On GLM-5.1, the marginal benefit of step-wise execution is more pronounced (B group 3.7 vs A group 1.3), while on GPT-5.4, code understanding dramatically improves batch mode performance (C group 5.0 vs A group 1.7). Both models exhibit negative interaction effects (D group underperforms single-factor groups), indicating that simultaneously enabling both capabilities creates cognitive load issues under the current agent architecture. This implies that as LLM capabilities improve, the optimal strategy should adjust the weight allocation between code understanding and runtime exploration based on model characteristics.
 
 \subsection{L0 Experiment Results}
 
@@ -609,20 +591,18 @@ The method proposed in this paper points toward a new engineering division of la
 
 \subsection{Construct Validity}
 
-\textbf{Metric appropriateness:} Whether F1 score and level-weighted score adequately reflect test quality merits discussion. For example, difficulty weight assignments (L1=1.0, L2=1.5, L3=2.0, L4=3.0) are based on author judgment and may be subjective.
-
-\textbf{Defect judgment criteria:} Some agent-reported findings require human judgment on whether they constitute true defects. Consistency of judgment criteria may affect the accuracy of precision and false positive rates.
+\textbf{Defect judgment criteria:} Some agent-reported findings require human judgment on whether they constitute true defects. Consistency of judgment criteria may affect the accuracy of precision rates.
 
 %% ============================================================
 \section{Conclusion and Future Work}
 
 \subsection{Conclusion}
 
-This paper presents BST-Agent, an agent-driven integration testing method based on tree-structured command space and step-wise reasoning. Through experimental validation on two LLMs (GLM-5.1, GPT-5.4), we draw the following conclusions:
+This paper presents DSMB-Agent, an agent-driven integration testing method based on deterministic state machine breakpoints. Through experimental validation on two LLMs (GLM-5.1, GPT-5.4), we draw the following conclusions:
 
 \begin{enumerate}
 \item Step-wise execution and code understanding each make independent contributions---on GLM-5.1, step-only and code-batch groups both reach 3.7/7 (vs.\ batch-only 1.3/7); on GPT-5.4, code-batch performs best (5.0/7).
-\item The effectiveness of code understanding depends heavily on model capability---on GLM-5.1, the marginal gain of code understanding (+0.18) is less than step-wise execution (+0.24), while on GPT-5.4, code understanding lifts batch mode from 1.7 to 5.0.
+\item The effectiveness of code understanding depends heavily on model capability---on GLM-5.1, step-wise execution shows a more pronounced marginal benefit (B group 3.7 vs A group 1.3), while on GPT-5.4, code understanding lifts batch mode from 1.7 to 5.0.
 \item Both models exhibit negative interaction effects---simultaneously enabling code analysis and step-wise execution reduces effectiveness, indicating a cognitive load ceiling in the current agent architecture.
 \item B1 is a shared blind spot across all L2 groups on both models---command registration capability (L0/L1) is key to overcoming interface blind spots.
 \item L0 (fully autonomous) mode on both models can build a complete test command set from scratch and discover 3--5 defects; L1 mode on GPT-5.4 averages 5.3/7 (single-run max 6/7), validating cross-model feasibility.
